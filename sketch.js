@@ -19,6 +19,11 @@ class Curve{
     this.points = points;
   }
 
+  remove(){
+    let index = curves.indexOf(this);
+    curves.splice(index, 1);
+  }
+
   removePoint(point){
     let index = this.points.indexOf(point);
     this.points.splice(index, 1);
@@ -74,11 +79,18 @@ function setup() {
     element.addEventListener("contextmenu", (e) => e.preventDefault());
   }
 
-  button = createButton("Nova Curva");
-  button.position(windowWidth/2, windowHeight-50);
-  button.size(100,50);
-  button.mousePressed(function(event) {
+  var addButton = createButton("Nova Curva");
+  addButton.position(windowWidth/2, windowHeight-60);
+  addButton.size(100,30);
+  addButton.mousePressed(function(event) {
     newCurve();
+  });
+
+  var removeButton = createButton("Remover");
+  removeButton.position(windowWidth/2, windowHeight-30);
+  removeButton.size(100,30);
+  removeButton.mousePressed(function(event) {
+    selectedCurve.remove();
   });
 
   var checkboxPoint = createCheckbox('Pontos de Controle', false);
