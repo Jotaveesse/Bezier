@@ -6,8 +6,8 @@ var displayControlPoint = true;
 var displayControlPoly = true;
 var displayCurves = true;
 var selectedCurve = null;
-var slider;
-var span;
+var evaluationsSlider;
+var evaluationsSpan;
 var colorPicker;
 
 const POINTSTROKE = 16;
@@ -79,70 +79,70 @@ function setup() {
     element.addEventListener("contextmenu", (e) => e.preventDefault());
   }
 
-  var addButton = createButton("Nova Curva");
-  addButton.position(windowWidth/2, windowHeight-60);
-  addButton.size(100,30);
-  addButton.mousePressed(function(event) {
+  var addButton = document.getElementById("add-button")
+  addButton.addEventListener("click", function(){
     newCurve();
   });
 
-  var removeButton = createButton("Remover");
-  removeButton.position(windowWidth/2, windowHeight-30);
-  removeButton.size(100,30);
-  removeButton.mousePressed(function(event) {
+  var removeButton = document.getElementById("remove-button")
+  removeButton.addEventListener("click", function(){
     selectedCurve.remove();
   });
 
-  var checkboxPoint = createCheckbox('Pontos de Controle', false);
-  checkboxPoint.position(windowWidth/2+100, windowHeight-60);
-  checkboxPoint.checked(true);
-  checkboxPoint.changed(function() {
-    displayControlPoint = checkboxPoint.checked();
+  var clearButton = document.getElementById("clear-button")
+  clearButton.addEventListener("click", function(){
+    curves = [];
   });
 
-  var checkboxPoly = createCheckbox('Linhas de Controle', false);
-  checkboxPoly.position(windowWidth/2+100, windowHeight-40);
-  checkboxPoly.checked(true);
-  checkboxPoly.changed(function() {
-    displayControlPoly = checkboxPoly.checked();
+  var pointCheckbox = document.getElementById("point-checkbox")
+  pointCheckbox.addEventListener("change", function(){
+    displayControlPoint = pointCheckbox.checked;
   });
 
-  var checkboxBezier = createCheckbox('Curva de Bezier', false);
-  checkboxBezier.position(windowWidth/2+100, windowHeight-20);
-  checkboxBezier.checked(true);
-  checkboxBezier.changed(function() {
-    displayCurves = checkboxBezier.checked();
+  var polyCheckbox = document.getElementById("poly-checkbox")
+  polyCheckbox.addEventListener("change", function(){
+    displayControlPoly = polyCheckbox.checked;
   });
 
-  span = createSpan('10');
-  span.position(windowWidth/2 - 135, windowHeight-50);
-
-  slider = createSlider(0, 100, 10);
-  slider.position(windowWidth/2 - 220, windowHeight-35);
-  slider.style('width', '200px');
-  slider.input(function() {
-    selectedCurve.evaluations = slider.value();
-    span.html(slider.value());
+   curveCheckbox = document.getElementById("curve-checkbox")
+  curveCheckbox.addEventListener("change", function(){
+    displayCurves = curveCheckbox.checked;
   });
 
-  colorPicker = createColorPicker('#000000');
-  colorPicker.position(windowWidth/2 + 260, windowHeight-35);
-  colorPicker.input(function() {
-    selectedCurve.color = colorPicker.color();
+  evaluationsSpan = document.getElementById("evaluations-span")
+
+  evaluationsSlider = document.getElementById("evaluations-slider")
+  evaluationsSlider.addEventListener("input", function(){
+    selectedCurve.evaluations = evaluationsSlider.value;
+    updateUI();
+  });
+
+  colorPicker = document.getElementById("color-picker")
+  colorPicker.addEventListener("input", function(){
+    selectedCurve.color = color(colorPicker.value);
   });
 
   newCurve();
 }
 
-function newCurve(){
-  curves.push(new Curve(color(150,100,250),10));
-  selectedCurve = curves[curves.length-1];
-  slider.value(selectedCurve.evaluations);
-  span.html(selectedCurve.evaluations);
+function updateUI(){
+  evaluationsSlider.value = selectedCurve.evaluations;
+  evaluationsSpan.textContent = selectedCurve.evaluations;
+
   let hexValue = '#' + hex(red(selectedCurve.color), 2) +
     hex(green(selectedCurve.color), 2) +
     hex(blue(selectedCurve.color), 2);
-  colorPicker.value(hexValue);
+  colorPicker.value = hexValue;
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
+function newCurve(){
+  curves.push(new Curve(color(colorPicker.value),10));
+  selectedCurve = curves[curves.length-1];
+  updateUI();
 }
 
 function mouseClicked(event){
@@ -156,9 +156,7 @@ function mouseClicked(event){
   if(shortestDist > POINTSTROKE ** 2 && !dragging){
     var p = new Point(mouseX, mouseY);
     selectedCurve.points.push(p);
-    slider.value(selectedCurve.evaluations);
-    span.html(selectedCurve.evaluations);
-    colorPicker.color(selectedCurve.color);
+    updateUI();
   }
 }
 
@@ -174,12 +172,9 @@ function mousePressed(event){
       draggedPoint = closestPoint;
       offsetX = closestPoint.x - mouseX;
       offsetY = closestPoint.y - mouseY;
+
       selectedCurve = closestCurve;
-      slider.value(selectedCurve.evaluations);
-      let hexValue = '#' + hex(red(selectedCurve.color), 2) +
-        hex(green(selectedCurve.color), 2) +
-        hex(blue(selectedCurve.color), 2);
-      colorPicker.value(hexValue);
+      updateUI();
     }
   }
   //remove ponto caso tenha apertado em cima de um
@@ -202,7 +197,7 @@ function mouseReleased() {
 }
 
 function draw(){
-  background(220);
+  background(50);
 
   curves.forEach(curve => {
     var interPoints = deCasteljau(curve.points, curve.evaluations);

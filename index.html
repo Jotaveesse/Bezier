@@ -14,5 +14,39 @@
 
   <body>
     <script src="sketch.js"></script>
+    <div class="UI">
+      
+      <div class="checkboxes">
+        <label>
+          <input id="point-checkbox" checked="true" type="checkbox">
+          <span>Pontos de Controle</span>
+        </label>
+        <label>
+          <input id="poly-checkbox" checked="true" type="checkbox">
+          <span>Polígonos de Controle</span>
+        </label>
+        <label>
+          <input id="curve-checkbox" checked="true" type="checkbox">
+          <span>Curvas de Bezier</span>
+        </label>
+      </div>
+
+      <div class="center-ui">
+        <div class="slider">
+          <span id="evaluations-span">10</span>
+          <input id="evaluations-slider" type="range" min="0" max="100">
+        </div>
+
+        <div class="buttons">
+          <button id="add-button">Nova Curva</button>
+          <button id="remove-button">Remover</button>
+          <button id="clear-button">Limpar</button>
+        </div>
+      </div>
+
+      <div class="color">
+        <input id="color-picker" type="color">
+      </div>
+    </div>
   </body>
 </html>
