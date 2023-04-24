@@ -6,6 +6,9 @@ var displayControlPoint = true;
 var displayControlPoly = true;
 var displayCurves = true;
 var selectedCurve = null;
+var slider;
+var span;
+var colorPicker;
 
 const POINTSTROKE = 16;
 
@@ -14,6 +17,16 @@ class Curve{
     this.color = color;
     this.evaluations = evaluations;
     this.points = points;
+  }
+
+  removePoint(point){
+    let index = this.points.indexOf(point);
+    this.points.splice(index, 1);
+
+    if(this.points.length == 0 && selectedCurve != this){
+      let index = curves.indexOf(this);
+      curves.splice(index, 1);
+    }
   }
 }
 
@@ -61,21 +74,85 @@ function setup() {
     element.addEventListener("contextmenu", (e) => e.preventDefault());
   }
 
-  curves.push(new Curve(color(250,100,50),10));
-  selectedCurve = curves[0];
+  button = createButton("Nova Curva");
+  button.position(windowWidth/2, windowHeight-50);
+  button.size(100,50);
+  button.mousePressed(function(event) {
+    newCurve();
+  });
+
+  var checkboxPoint = createCheckbox('Pontos de Controle', false);
+  checkboxPoint.position(windowWidth/2+100, windowHeight-60);
+  checkboxPoint.checked(true);
+  checkboxPoint.changed(function() {
+    displayControlPoint = checkboxPoint.checked();
+  });
+
+  var checkboxPoly = createCheckbox('Linhas de Controle', false);
+  checkboxPoly.position(windowWidth/2+100, windowHeight-40);
+  checkboxPoly.checked(true);
+  checkboxPoly.changed(function() {
+    displayControlPoly = checkboxPoly.checked();
+  });
+
+  var checkboxBezier = createCheckbox('Curva de Bezier', false);
+  checkboxBezier.position(windowWidth/2+100, windowHeight-20);
+  checkboxBezier.checked(true);
+  checkboxBezier.changed(function() {
+    displayCurves = checkboxBezier.checked();
+  });
+
+  span = createSpan('10');
+  span.position(windowWidth/2 - 135, windowHeight-50);
+
+  slider = createSlider(0, 100, 10);
+  slider.position(windowWidth/2 - 220, windowHeight-35);
+  slider.style('width', '200px');
+  slider.input(function() {
+    selectedCurve.evaluations = slider.value();
+    span.html(slider.value());
+  });
+
+  colorPicker = createColorPicker('#000000');
+  colorPicker.position(windowWidth/2 + 260, windowHeight-35);
+  colorPicker.input(function() {
+    selectedCurve.color = colorPicker.color();
+  });
+
+  newCurve();
 }
 
-function mouseClicked(){
+function newCurve(){
+  curves.push(new Curve(color(150,100,250),10));
+  selectedCurve = curves[curves.length-1];
+  slider.value(selectedCurve.evaluations);
+  span.html(selectedCurve.evaluations);
+  let hexValue = '#' + hex(red(selectedCurve.color), 2) +
+    hex(green(selectedCurve.color), 2) +
+    hex(blue(selectedCurve.color), 2);
+  colorPicker.value(hexValue);
+}
+
+function mouseClicked(event){
+  if(event.target.tagName != "CANVAS") return;
+
+  console.log(curves);
+
   var {shortestDist} = closestCurvePoint(curves, mouseX, mouseY);
 
   //adiciona ponto se não estiver clicado em cima de outro ponto
   if(shortestDist > POINTSTROKE ** 2 && !dragging){
     var p = new Point(mouseX, mouseY);
     selectedCurve.points.push(p);
+    slider.value(selectedCurve.evaluations);
+    span.html(selectedCurve.evaluations);
+    colorPicker.color(selectedCurve.color);
   }
 }
 
-function mousePressed(){  
+function mousePressed(event){
+  if(event.target.tagName != "CANVAS") return;
+
   var {closestCurve, closestPoint, shortestDist} = closestCurvePoint(curves, mouseX, mouseY);
 
   //arrasta caso tenha apertado em cima de um ponto
@@ -85,23 +162,22 @@ function mousePressed(){
       draggedPoint = closestPoint;
       offsetX = closestPoint.x - mouseX;
       offsetY = closestPoint.y - mouseY;
+      selectedCurve = closestCurve;
+      slider.value(selectedCurve.evaluations);
+      let hexValue = '#' + hex(red(selectedCurve.color), 2) +
+        hex(green(selectedCurve.color), 2) +
+        hex(blue(selectedCurve.color), 2);
+      colorPicker.value(hexValue);
     }
   }
   //remove ponto caso tenha apertado em cima de um
   else if(mouseButton === RIGHT){
     if (shortestDist <= (POINTSTROKE / 2) ** 2) {
-      let index = closestCurve.points.indexOf(closestPoint);
-      closestCurve.points.splice(index, 1);
-    }
-  }
-
-  else if(mouseButton === CENTER){
-    if (shortestDist >= (POINTSTROKE / 2) ** 2) {
-      curves.push(new Curve(color(250,0,50),10));
-      selectedCurve = curves[curves.length-1];
+      closestCurve.removePoint(closestPoint);
     }
   }
 }
+
 function mouseDragged() {
   if (dragging) {
     draggedPoint.x = mouseX + offsetX;
@@ -118,19 +194,24 @@ function draw(){
 
   curves.forEach(curve => {
     var interPoints = deCasteljau(curve.points, curve.evaluations);
-
+    
     curve.color.setAlpha(128);
-    drawLines(curve.points, curve.color);
+    if(displayControlPoly)
+      drawLines(curve.points, curve.color);
 
-    curve.color.setAlpha(256);
-    drawLines(interPoints, curve.color);
-    drawPoints(curve.points, curve.color);
+    curve.color.setAlpha(255);
+    if(displayCurves)
+      drawLines(interPoints, curve.color);
+    
+    if(displayControlPoint){
+      drawPoints(curve.points, curve.color);
+    }
 
   });
 
 function drawPoints(points, color){
   points.forEach(p => {
-    color.setAlpha(256);
+    color.setAlpha(255);
     stroke(color);
     strokeWeight(POINTSTROKE);
 
@@ -142,7 +223,7 @@ function drawLines(points, color){
   var prevPoint = null;
 
   points.forEach(p => {
-    if(displayControlPoly && prevPoint!=null){
+    if(prevPoint!=null){
       stroke(color);
       strokeWeight(POINTSTROKE * 0.6);
 
@@ -161,13 +242,14 @@ function deCasteljau(points, nEvaluations) {
   if (points == undefined || points.length <= 1) return [];
   var result = [];
   var controls;
-
-  for (let t = 0; t <= 1; t += 1 / nEvaluations) {
+  var u = 0;
+  for (let t = 0; t <= nEvaluations; t += 1) {
     controls = points;
+
     while (controls.length > 1) {
       var aux = [];
       for (let i = 0; i < controls.length - 1; i++) {
-        aux[i] = interpolate(t, controls[i], controls[i + 1]);
+        aux[i] = interpolate(t/nEvaluations, controls[i], controls[i + 1]);
       }
       
       controls = aux;
