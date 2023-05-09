@@ -21,7 +21,8 @@ class Curve{
 
   remove(){
     let index = curves.indexOf(this);
-    curves.splice(index, 1);
+    if(index!=-1)
+      curves.splice(index, 1);
   }
 
   removePoint(point){
@@ -123,6 +124,8 @@ function setup() {
   });
 
   newCurve();
+  selectedCurve.color = color(255, 255,255);
+  updateUI()
 }
 
 function updateUI(){
