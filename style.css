@@ -21,6 +21,14 @@ button {
   cursor: pointer;
 }
 
+button:hover{
+  background-color: #101010;
+}
+
+button:active{
+  background-color: #070707;
+}
+
 .UI {
   position: absolute;
   bottom:0;
@@ -32,6 +40,7 @@ button {
 
 .checkboxes {
   width:40%;
+  cursor: pointer;
 }
 
 .checkboxes label {
@@ -39,6 +48,7 @@ button {
   display: inline-flex;
   align-items: center;
   font-size: 0.9em;
+  cursor: pointer;
 }
 
 .center-ui {
@@ -61,6 +71,7 @@ button {
 
 .slider input {
   width: 88%;
+  cursor: pointer;
 }
 
 .slider span {
@@ -79,4 +90,5 @@ button {
   height: 80%;
   width: 50%;
   margin: auto;
+  cursor: pointer;
 }

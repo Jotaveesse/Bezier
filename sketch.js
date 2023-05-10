@@ -34,6 +34,27 @@ class Curve{
       curves.splice(index, 1);
     }
   }
+
+  static closestCurvePoint(x, y){
+    var dist;
+    var shortestDist = Infinity;
+    var closestPoint = null;
+    var closestCurve = null;
+  
+    curves.forEach(curve => {
+      curve.points.forEach(p => {
+        dist = p.distSqrd(x, y);
+  
+        if(dist < shortestDist){
+          shortestDist = dist;
+          closestPoint = p;
+          closestCurve = curve;
+        }
+      });
+    });
+  
+    return {closestCurve, closestPoint, shortestDist};
+  }
 }
 
 class Point{
@@ -51,27 +72,6 @@ class Point{
   }
 }
 
-function closestCurvePoint(c, x, y){
-  var dist;
-  var shortestDist = Infinity;
-  var closestPoint = null;
-  var closestCurve = null;
-
-  c.forEach(curve => {
-    curve.points.forEach(p => {
-      dist = p.distSqrd(x, y);
-
-      if(dist < shortestDist){
-        shortestDist = dist;
-        closestPoint = p;
-        closestCurve = curve;
-      }
-    });
-  });
-
-  return {closestCurve, closestPoint, shortestDist};
-}
-
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
@@ -80,6 +80,7 @@ function setup() {
     element.addEventListener("contextmenu", (e) => e.preventDefault());
   }
 
+  //adiciona eventos da UI
   var addButton = document.getElementById("add-button")
   addButton.addEventListener("click", function(){
     newCurve();
@@ -88,11 +89,13 @@ function setup() {
   var removeButton = document.getElementById("remove-button")
   removeButton.addEventListener("click", function(){
     selectedCurve.remove();
+    newCurve();
   });
 
   var clearButton = document.getElementById("clear-button")
   clearButton.addEventListener("click", function(){
     curves = [];
+    newCurve();
   });
 
   var pointCheckbox = document.getElementById("point-checkbox")
@@ -105,7 +108,7 @@ function setup() {
     displayControlPoly = polyCheckbox.checked;
   });
 
-   curveCheckbox = document.getElementById("curve-checkbox")
+  var curveCheckbox = document.getElementById("curve-checkbox")
   curveCheckbox.addEventListener("change", function(){
     displayCurves = curveCheckbox.checked;
   });
@@ -124,79 +127,9 @@ function setup() {
   });
 
   newCurve();
+  //cor inicial
   selectedCurve.color = color(255, 255,255);
   updateUI()
-}
-
-function updateUI(){
-  evaluationsSlider.value = selectedCurve.evaluations;
-  evaluationsSpan.textContent = selectedCurve.evaluations;
-
-  let hexValue = '#' + hex(red(selectedCurve.color), 2) +
-    hex(green(selectedCurve.color), 2) +
-    hex(blue(selectedCurve.color), 2);
-  colorPicker.value = hexValue;
-}
-
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-}
-
-function newCurve(){
-  curves.push(new Curve(color(colorPicker.value),10));
-  selectedCurve = curves[curves.length-1];
-  updateUI();
-}
-
-function mouseClicked(event){
-  if(event.target.tagName != "CANVAS") return;
-
-  console.log(curves);
-
-  var {shortestDist} = closestCurvePoint(curves, mouseX, mouseY);
-
-  //adiciona ponto se não estiver clicado em cima de outro ponto
-  if(shortestDist > POINTSTROKE ** 2 && !dragging){
-    var p = new Point(mouseX, mouseY);
-    selectedCurve.points.push(p);
-    updateUI();
-  }
-}
-
-function mousePressed(event){
-  if(event.target.tagName != "CANVAS") return;
-
-  var {closestCurve, closestPoint, shortestDist} = closestCurvePoint(curves, mouseX, mouseY);
-
-  //arrasta caso tenha apertado em cima de um ponto
-  if(mouseButton === LEFT){
-    if (shortestDist <= (POINTSTROKE / 2) ** 2) {
-      dragging = true;
-      draggedPoint = closestPoint;
-      offsetX = closestPoint.x - mouseX;
-      offsetY = closestPoint.y - mouseY;
-
-      selectedCurve = closestCurve;
-      updateUI();
-    }
-  }
-  //remove ponto caso tenha apertado em cima de um
-  else if(mouseButton === RIGHT){
-    if (shortestDist <= (POINTSTROKE / 2) ** 2) {
-      closestCurve.removePoint(closestPoint);
-    }
-  }
-}
-
-function mouseDragged() {
-  if (dragging) {
-    draggedPoint.x = mouseX + offsetX;
-    draggedPoint.y = mouseY + offsetY;
-  }
-}
-
-function mouseReleased() {
-  dragging = false;
 }
 
 function draw(){
@@ -218,6 +151,78 @@ function draw(){
     }
 
   });
+}
+
+function mouseClicked(event){
+  if(event.target.tagName != "CANVAS") return;
+  var {shortestDist} = Curve.closestCurvePoint(mouseX, mouseY);
+
+  //adiciona ponto se não estiver clicado em cima de outro ponto
+  if(shortestDist > POINTSTROKE ** 2 && !dragging){
+    var p = new Point(mouseX, mouseY);
+    selectedCurve.points.push(p);
+    updateUI();
+  }
+}
+
+function mousePressed(event){
+  if(event.target.tagName != "CANVAS") return;
+
+  var {closestCurve, closestPoint, shortestDist} = Curve.closestCurvePoint(mouseX, mouseY);
+
+  //arrasta caso tenha apertado em cima de um ponto
+  if(mouseButton === LEFT){
+    if (shortestDist <= (POINTSTROKE / 2) ** 2) {
+      dragging = true;
+      draggedPoint = closestPoint;
+      offsetX = closestPoint.x - mouseX;
+      offsetY = closestPoint.y - mouseY;
+
+      selectedCurve = closestCurve;
+      updateUI();
+      removeEmpty();  //caso tenha deselecionado uma curva vazia
+    }
+  }
+  //remove ponto caso tenha apertado em cima de um
+  else if(mouseButton === RIGHT){
+    if (shortestDist <= (POINTSTROKE / 2) ** 2) {
+      closestCurve.removePoint(closestPoint);
+    }
+  }
+}
+
+function mouseDragged() {
+  if (dragging) {
+    draggedPoint.x = mouseX + offsetX;
+    draggedPoint.y = mouseY + offsetY;
+  }
+}
+
+function mouseReleased() {
+  dragging = false;
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
+function updateUI(){
+  //atualiza UI com base na curva selecionada
+  evaluationsSlider.value = selectedCurve.evaluations;
+  evaluationsSpan.textContent = selectedCurve.evaluations;
+
+  let hexValue = '#' + hex(red(selectedCurve.color), 2) +
+    hex(green(selectedCurve.color), 2) +
+    hex(blue(selectedCurve.color), 2);
+  colorPicker.value = hexValue;
+}
+
+function newCurve(){
+  //pega cor do colorPicker
+  curves.push(new Curve(color(colorPicker.value),10));
+  selectedCurve = curves[curves.length-1];
+  updateUI();
+}
 
 function drawPoints(points, color){
   points.forEach(p => {
@@ -244,6 +249,14 @@ function drawLines(points, color){
   });
 }
 
+function removeEmpty(){
+  //remove todas as curvas vazias
+  curves.forEach(curve => {
+    if(curve.points.length==0)
+      curve.remove();
+  });
+}
+
 function interpolate(t, p0, p1) {
   return { x: (1 - t) * p0.x + t * p1.x, y: (1 - t) * p0.y + t * p1.y };
 }
@@ -267,6 +280,4 @@ function deCasteljau(points, nEvaluations) {
     result.push(controls[0]);
   }
   return result;
-}
-
 }
