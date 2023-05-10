@@ -4,6 +4,7 @@ html, body {
   font-family: "Segoe UI", Arial, sans-serif;
   color: white;
   font-weight: 600;
+  overflow: hidden;
 }
 
 canvas {
@@ -11,7 +12,7 @@ canvas {
 }
 
 button {
-  background-color: #181818;
+  background-color: #161616;
   color: white;
   font-weight: 600;
   border-radius: 6px;
@@ -30,24 +31,26 @@ button:active{
 }
 
 .UI {
+  background-color: #222222;
   position: absolute;
   bottom:0;
   width:100%;
   height: auto;
-  margin-bottom: 6px;;
   display: flex;
+  padding: 16px;
+  border-radius: 20px 20px 0px 0px;
+  box-sizing: border-box;
 }
 
 .checkboxes {
   width:40%;
-  cursor: pointer;
 }
 
 .checkboxes label {
   height: 100%;
   display: inline-flex;
   align-items: center;
-  font-size: 0.9em;
+  font-size: 0.94em;
   cursor: pointer;
 }
 
@@ -67,6 +70,7 @@ button:active{
   height: auto;
   justify-content: center;
   display: flex;
+  padding-bottom: 8px;
 }
 
 .slider input {
