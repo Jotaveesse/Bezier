@@ -9,13 +9,13 @@ var selectedCurve = null;
 var evaluationsSlider;
 var evaluationsSpan;
 var colorPicker;
+var evaluations = 10;
 
 const POINTSTROKE = 16;
 
 class Curve{
-  constructor(color, evaluations, points=[]) {
+  constructor(color, points=[]) {
     this.color = color;
-    this.evaluations = evaluations;
     this.points = points;
   }
 
@@ -117,7 +117,7 @@ function setup() {
 
   evaluationsSlider = document.getElementById("evaluations-slider")
   evaluationsSlider.addEventListener("input", function(){
-    selectedCurve.evaluations = evaluationsSlider.value;
+    evaluations = evaluationsSlider.value;
     updateUI();
   });
 
@@ -136,7 +136,7 @@ function draw(){
   background(50);
 
   curves.forEach(curve => {
-    var interPoints = deCasteljau(curve.points, curve.evaluations);
+    var interPoints = deCasteljau(curve.points);
     
     curve.color.setAlpha(128);
     if(displayControlPoly)
@@ -208,8 +208,8 @@ function windowResized() {
 
 function updateUI(){
   //atualiza UI com base na curva selecionada
-  evaluationsSlider.value = selectedCurve.evaluations;
-  evaluationsSpan.textContent = selectedCurve.evaluations;
+  evaluationsSlider.value = evaluations;
+  evaluationsSpan.textContent = evaluations;
 
   let hexValue = '#' + hex(red(selectedCurve.color), 2) +
     hex(green(selectedCurve.color), 2) +
@@ -219,7 +219,7 @@ function updateUI(){
 
 function newCurve(){
   //pega cor do colorPicker
-  curves.push(new Curve(color(colorPicker.value),10));
+  curves.push(new Curve(color(colorPicker.value)));
   selectedCurve = curves[curves.length-1];
   updateUI();
 }
@@ -261,18 +261,18 @@ function interpolate(t, p0, p1) {
   return { x: (1 - t) * p0.x + t * p1.x, y: (1 - t) * p0.y + t * p1.y };
 }
   
-function deCasteljau(points, nEvaluations) {
+function deCasteljau(points) {
   if (points == undefined || points.length <= 1) return [];
   var result = [];
   var controls;
-  var u = 0;
-  for (let t = 0; t <= nEvaluations; t += 1) {
+  
+  for (let t = 0; t <= evaluations; t += 1) {
     controls = points;
 
     while (controls.length > 1) {
       var aux = [];
       for (let i = 0; i < controls.length - 1; i++) {
-        aux[i] = interpolate(t/nEvaluations, controls[i], controls[i + 1]);
+        aux[i] = interpolate(t/evaluations, controls[i], controls[i + 1]);
       }
       
       controls = aux;
